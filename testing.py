@@ -45,7 +45,10 @@ def getRaceResult(year, round):
 
     for racer in dict['MRData']['RaceTable']['Race']['ResultsList']['Result']:
         result = {}
-        result['name'] = racer['Driver']['@driverId']
+        result['driverId'] = racer['Driver']['@driverId']
+        result['driverFname'] = racer['Driver']['GivenName']
+        result['driverLname'] = racer['Driver']['FamilyName']
+        result['Constructor'] = racer['Constructor']['Name']
         result['points'] = racer['@points']
         if 'FastestLap' in racer:
             result['fastestLapPlace'] = racer['FastestLap']['@rank']
@@ -56,9 +59,12 @@ def getRaceResult(year, round):
 
 season2023 = getSeason(2023)
 today = datetime.today()
+results = []
 for round in season2023:
     #If race has been completed
     roundDate = datetime.strptime(season2023[round]['date'], '%Y-%m-%d')
     if today > roundDate:
         raceResult = getRaceResult(2023,round)
-        print(raceResult)
+        results.append(raceResult)
+
+print(results)
