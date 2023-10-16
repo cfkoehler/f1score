@@ -202,6 +202,6 @@ with open('output.csv', 'w', newline='') as csvfile:
     writer.writerow(row.values())
 
 # Output text file with update time and most recent race/round
-updateString = "Last Updated: " + today.isoformat() + ", After Round: " + season2023[str(len(results)+1)]['name']
+updateString = "Last Updated: " + today.isoformat() + ", After Round: " + season2023[str(len(results))]['name']
 with open ('lastUpdate.txt', 'w', newline='') as txtfile:
     txtfile.write(updateString)
