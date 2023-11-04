@@ -3,7 +3,7 @@ name: Fetch latest f1 Score data
 on: 
     workflow_dispatch:
     schedule: 
-        - cron: '0 0 * * *'
+        - cron: '0 0 * * 1'
 
 permissions:
     contents: write
