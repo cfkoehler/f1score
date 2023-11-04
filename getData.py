@@ -68,7 +68,22 @@ def getRaceResult(year, round):
         else: 
             result['fastestLapPlace'] = 20
         results[racer['@position']] = result
+    return results
 
+def getSprintResult(year, round):
+    url = "https://ergast.com/api/f1/{}/{}/sprint".format(year, round)
+    response = requests.get(url)
+    dict = xmltodict.parse(response.content)
+    results = {}
+    for racer in dict['MRData']['RaceTable']['Race']['SprintList']['SprintResult']:
+        result = {}
+        result['driverId'] = racer['Driver']['@driverId']
+        result['driverFname'] = racer['Driver']['GivenName']
+        result['driverLname'] = racer['Driver']['FamilyName']
+        result['constructor'] = racer['Constructor']['Name']
+        result['place'] = racer['@position']
+        result['points'] = racer['@points']
+        results[racer['@position']] = result
     return results
 
 
@@ -144,22 +159,34 @@ def placeToPoints(place, fastestLap):
         pointChange2 = pointChange2 + 1
     return [normalPoints, pointChange1, pointChange2]
 
+def getSprintPoints(sprintRace, driverId):
+    for racer in sprintRace:
+        driver = sprintRace[racer]
+        if driver['driverId'] == driverId:
+            return int(driver['points'])
+
 
 season2023 = getSeason(2023)
 drivers = getDrivers(2023)
 today = datetime.today()
+sprintRounds = ['4','9','12','17','18','20']
 results = []
+sprintResults = []
 for round in season2023:
     #If race has been completed
     roundDate = datetime.strptime(season2023[round]['date'], '%Y-%m-%d')
     if today > roundDate:
         raceResult = getRaceResult(2023,round)
+        if round in sprintRounds:
+            sprint = getSprintResult(2023, round)
+            sprintResults.append(sprint)
         results.append(raceResult)
 
 #print(results)
 
 # Get drivers in order with today's points
 # Iterate over the results to calculate total points
+roundIndex = 1
 for round in results:
     for racer in round:
         # Add point data to driver info
@@ -167,15 +194,20 @@ for round in results:
         driverId = round[racer]['driverId']
         thisDriverInfo = drivers[driverId]
         roundPoints = placeToPoints(round[racer]['place'], round[racer]['fastestLapPlace'])
+        sprintPoints = 0
+        if str(roundIndex) in sprintRounds:
+            sprintPoints = getSprintPoints(sprintResults[sprintRounds.index(str(roundIndex))], driverId)
         if 'points' in thisDriverInfo:
             # Points exist so we should add to it
             pastPoints = thisDriverInfo['points']
             newPoints = [pastPoints[0]+roundPoints[0], pastPoints[1]+roundPoints[1], pastPoints[2]+roundPoints[2]]
+            newPoints = [newPoints[0]+sprintPoints,newPoints[1]+sprintPoints,newPoints[2]+sprintPoints]
             thisDriverInfo['points'] = newPoints
         else:
-            # First time adding points
+            # First time adding points. No sprint race in first round
             thisDriverInfo['points'] = roundPoints
-        drivers[driverId] =thisDriverInfo
+        drivers[driverId] = thisDriverInfo
+    roundIndex = roundIndex + 1
 
 
 # Create print list with details
